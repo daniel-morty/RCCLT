@@ -8,11 +8,13 @@
 #define RB_PIN 8
 #define LF_PIN 7
 #define LB_PIN 6
+#define LASER_PIN 18
 
 #define RF_BUT 9
 #define RB_BUT 8
 #define LF_BUT 7
 #define LB_BUT 6
+#define LASER_BUT 3
 
 // Define the structure of your data
 typedef struct __attribute__((packed)) {
@@ -21,6 +23,7 @@ typedef struct __attribute__((packed)) {
     bool rb;
     bool lf;
     bool lb;
+	bool shoot_laser;
 } my_data_t;
 
 // Destination MAC address

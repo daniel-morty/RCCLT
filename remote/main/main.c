@@ -31,7 +31,7 @@
 
 #include "espnow_basic_config.h"
 
-#define IN_PIN_SEL ((1ULL<<RF_BUT) | (1ULL<<RB_BUT) | (1ULL<<LF_BUT) | (1ULL<<LB_BUT))
+#define IN_PIN_SEL ((1ULL<<RF_BUT) | (1ULL<<RB_BUT) | (1ULL<<LF_BUT) | (1ULL<<LB_BUT) | (1ULL<<LASER_BUT))
 
 static const char *TAG = "Basic_Slave";
 
@@ -101,6 +101,7 @@ static esp_err_t send_espnow_data(void)
 	data.rb = !(gpio_get_level(RB_BUT));
 	data.lf = !(gpio_get_level(LF_BUT));
 	data.lb = !(gpio_get_level(LB_BUT));
+	data.shoot_laser = !(gpio_get_level(LASER_BUT));
 
     // Send it
     esp_err_t err = esp_now_send(destination_mac, (uint8_t*)&data, sizeof(data));

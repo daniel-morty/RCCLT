@@ -18,7 +18,7 @@
 
 #include "espnow_basic_config.h"
 
-#define OUT_PIN_SEL ((1ULL<<RF_PIN) | (1ULL<<RB_PIN) | (1ULL<<LF_PIN) | (1ULL<<LB_PIN))
+#define OUT_PIN_SEL ((1ULL<<RF_PIN) | (1ULL<<RB_PIN) | (1ULL<<LF_PIN) | (1ULL<<LB_PIN) | (1ULL<<LASER_PIN))
 
 static const char *TAG = "car";
 
@@ -51,6 +51,7 @@ static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 	gpio_set_level(RB_PIN, packet->rb);
 	gpio_set_level(LF_PIN, packet->lf);
 	gpio_set_level(LB_PIN, packet->lb);
+	gpio_set_level(LASER_PIN, packet->shoot_laser);
 
 	return;
 }
