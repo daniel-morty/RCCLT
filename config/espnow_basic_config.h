@@ -4,6 +4,9 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+//change this value to compile for different care remote pairs
+#define CAR_REMOTE_PAIR 1
+
 #define RF_PIN 9
 #define RB_PIN 8
 #define LF_PIN 7
@@ -16,21 +19,61 @@
 #define LB_BUT 6
 #define LASER_BUT 3
 
+//message types
+#define CAR_COMMAND  1
+#define HIT_REPORT   2
+#define SCORE_UPDATE 3
+
 // Define the structure of your data
 typedef struct __attribute__((packed)) {
-	//direction to move the car
+	//message type
+	uint8_t message_type;
+
+	//commands to the car
+	//use if message type is CAR_COMMAND
     bool rf;
     bool rb;
     bool lf;
     bool lb;
 	bool shoot_laser;
+
+	//hit report 
+	//use if mssage type is HIT_REPORT
+	uint8_t car_shooting;
+	uint8_t car_shot;
+
+	//score update
+	//use if message type is SCORE_UPDATE
+	int updated_score;
+	int updated_life_points;
 } my_data_t;
 
-// Destination MAC address
-// The default address is the broadcast address, which will work out of the box, but the slave will assume every tx succeeds.
-// Setting to the master's address will allow the slave to determine if sending succeeded or failed.
-//   note: with default config, the master's WiFi driver will log this for you. eg. I (721) wifi:mode : sta (12:34:56:78:9a:bc)
-#define MY_RECEIVER_MAC {0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
+#define SCORE_BOARD_MAC {0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5c}
+
+#if CAR_REMOTE_PAIR == 1
+	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
+	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}
+	#define CAR_ID 1
+	#define REMOTE_ID 1
+
+#elif CAR_REMOTE_PAIR == 2
+	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88} //TODO UPDATE THIS
+	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+	#define CAR_ID 2
+	#define REMOTE_ID 2
+
+#elif CAR_REMOTE_PAIR == 3
+	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88} //TODO UPDATE THIS
+	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+	#define CAR_ID 3
+	#define REMOTE_ID 3
+
+#elif CAR_REMOTE_PAIR == 4
+	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88} //TODO UPDATE THIS
+	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+	#define CAR_ID 4
+	#define REMOTE_ID 4
+#endif
 
 #define MY_ESPNOW_PMK "pmk1234567890123"
 #define MY_ESPNOW_CHANNEL 1

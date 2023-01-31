@@ -83,7 +83,7 @@ static void init_espnow_slave(void)
 
     // Alter this if you want to specify the gateway mac, enable encyption, etc
     const esp_now_peer_info_t broadcast_destination = {
-        .peer_addr = MY_RECEIVER_MAC,
+        .peer_addr = CAR_MAC,
         .channel = MY_ESPNOW_CHANNEL,
         .ifidx = MY_ESPNOW_WIFI_IF
     };
@@ -92,11 +92,12 @@ static void init_espnow_slave(void)
 
 static esp_err_t send_espnow_data(void)
 {
-    const uint8_t destination_mac[] = MY_RECEIVER_MAC;
+    const uint8_t destination_mac[] = CAR_MAC;
     static my_data_t data;
 
 	//populate data
 	//TODO make sure no conflicting data can be sent	
+	data.message_type = CAR_COMMAND;
 	data.rf = !(gpio_get_level(RF_BUT));
 	data.rb = !(gpio_get_level(RB_BUT));
 	data.lf = !(gpio_get_level(LF_BUT));

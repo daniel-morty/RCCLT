@@ -1,3 +1,4 @@
+BEFORE DOING THIS vvv CHECK THE IR EXAMPLE THAT WAS JUST FOUND AND ADDED TO /esp/
 ask Dr. phillips about how to determin different frequencies
 	the idea I have to is to get an interrupt and then start counting until the next
 	interrupt is recieved. it seems inaccurate to me.

@@ -23,6 +23,7 @@
 static const char *TAG = "car";
 
 
+static esp_err_t send_espnow_data(my_data_t data);
 
 typedef struct {
     uint8_t sender_mac_addr[ESP_NOW_ETH_ALEN];
@@ -34,6 +35,22 @@ typedef struct {
 #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
 // #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
 // #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
+
+static void car_hit(){
+	//TODO send report to score_board
+	my_data_t data;
+	data.message_type = HIT_REPORT;
+	data.car_shooting = 1;//TODO get id of car shooting
+	data.car_shot = CAR_ID;
+
+	//send it
+	ESP_LOGI(TAG, "sending hit report");
+	esp_err_t err = send_espnow_data(data);
+	if(err != ESP_OK){
+	ESP_LOGE(TAG, "error sending hit_report message");
+	}
+	return;
+}
 
 static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
@@ -47,13 +64,36 @@ static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 	//move the car accordingly
 	my_data_t *packet = data; //!note this line generates a warning. it works fine though
 								//because we checked the length above
-	gpio_set_level(RF_PIN, packet->rf);
-	gpio_set_level(RB_PIN, packet->rb);
-	gpio_set_level(LF_PIN, packet->lf);
-	gpio_set_level(LB_PIN, packet->lb);
-	gpio_set_level(LASER_PIN, packet->shoot_laser);
+
+	if(packet->message_type != CAR_COMMAND){
+		ESP_LOGE(TAG, "wrong message_type recieved");
+	} else{
+		gpio_set_level(RF_PIN, packet->rf);
+		gpio_set_level(RB_PIN, packet->rb);
+		gpio_set_level(LF_PIN, packet->lf);
+		gpio_set_level(LB_PIN, packet->lb);
+		gpio_set_level(LASER_PIN, packet->shoot_laser);
+	}
 
 	return;
+}
+
+static esp_err_t send_espnow_data(my_data_t data)
+{
+    const uint8_t destination_mac[] = SCORE_BOARD_MAC;
+
+
+    // Send it
+    esp_err_t err = esp_now_send(destination_mac, (uint8_t*)&data, sizeof(data));
+    if(err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Send error (%d)", err);
+        return ESP_FAIL;
+    }
+
+
+    ESP_LOGI(TAG, "Sent!");
+    return ESP_OK;
 }
 
 static void init_espnow_master(void)
