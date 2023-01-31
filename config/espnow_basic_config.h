@@ -12,6 +12,8 @@
 #define LF_PIN 7
 #define LB_PIN 6
 #define LASER_PIN 18
+#define EXAMPLE_IR_TX_GPIO_NUM       18
+#define EXAMPLE_IR_RX_GPIO_NUM       3
 
 #define RF_BUT 9
 #define RB_BUT 8
