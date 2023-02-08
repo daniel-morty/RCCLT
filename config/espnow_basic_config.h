@@ -26,6 +26,12 @@
 #define HIT_REPORT   2
 #define SCORE_UPDATE 3
 
+
+typedef struct {
+	int score;
+	int life_points;
+} score_t;
+
 // Define the structure of your data
 typedef struct __attribute__((packed)) {
 	//message type
@@ -48,31 +54,44 @@ typedef struct __attribute__((packed)) {
 	//use if message type is SCORE_UPDATE
 	int updated_score;
 	int updated_life_points;
+	uint8_t car_id;
 } my_data_t;
 
-#define SCORE_BOARD_MAC {0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5c}
+#define SCORE_BOARD_MAC (uint8_t[]){0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5c}
+
+#define PAIR_1_CAR_MAC		(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
+#define PAIR_1_REMOTE_MAC	(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}
+
+#define PAIR_2_CAR_MAC		(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}//TODO UPDATE THIS
+#define PAIR_2_REMOTE_MAC	(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+
+#define PAIR_3_CAR_MAC		(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}//TODO UPDATE THIS
+#define PAIR_3_REMOTE_MAC	(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+
+#define PAIR_4_CAR_MAC		(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}//TODO UPDATE THIS
+#define PAIR_4_REMOTE_MAC	(uint8_t[]){0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
 
 #if CAR_REMOTE_PAIR == 1
-	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
-	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}
+	#define CAR_MAC		PAIR_1_CAR_MAC	 
+	#define REMOTE_MAC	PAIR_1_REMOTE_MAC
 	#define CAR_ID 1
 	#define REMOTE_ID 1
 
 #elif CAR_REMOTE_PAIR == 2
-	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88} //TODO UPDATE THIS
-	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+	#define CAR_MAC		PAIR_2_CAR_MAC	 
+	#define REMOTE_MAC	PAIR_2_REMOTE_MAC
 	#define CAR_ID 2
 	#define REMOTE_ID 2
 
 #elif CAR_REMOTE_PAIR == 3
-	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88} //TODO UPDATE THIS
-	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+	#define CAR_MAC		PAIR_3_CAR_MAC	 
+	#define REMOTE_MAC	PAIR_3_REMOTE_MAC
 	#define CAR_ID 3
 	#define REMOTE_ID 3
 
 #elif CAR_REMOTE_PAIR == 4
-	#define CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88} //TODO UPDATE THIS
-	#define REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}//TODO UPDATE THIS
+	#define CAR_MAC		PAIR_4_CAR_MAC	 
+	#define REMOTE_MAC	PAIR_4_REMOTE_MAC
 	#define CAR_ID 4
 	#define REMOTE_ID 4
 #endif
@@ -83,5 +102,7 @@ typedef struct __attribute__((packed)) {
 // #define MY_ESPNOW_ENABLE_LONG_RANGE 1
 
 #define MY_SLAVE_DEEP_SLEEP_TIME_MS 1000
+
+#define STARTING_LIFE_POINTS 10
 
 #endif // ESPNOW_BASIC_CONFIG_H

@@ -1,5 +1,24 @@
-BEFORE DOING THIS vvv CHECK THE IR EXAMPLE THAT WAS JUST FOUND AND ADDED TO /esp/
-ask Dr. phillips about how to determin different frequencies
-	the idea I have to is to get an interrupt and then start counting until the next
-	interrupt is recieved. it seems inaccurate to me.
-	if I have car one 100us and car two 200us etc. will that work?
+REMOTE
+==================================================================================================
+- get screen working
+
+
+
+CAR
+==================================================================================================
+-clean up ir code. It's horrendous and causes errors that take up time
+	- is there a way to get rid of the RTOS? It's slow.
+	- order more of the correct resistor for the IR led
+
+
+
+
+SCORE_BOARD
+==================================================================================================
+-test
+
+
+GENERAL
+==================================================================================================
+- get ip addresses of more car remote pairs
+- clean up code, comment code, have some class

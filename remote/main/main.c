@@ -96,7 +96,6 @@ static esp_err_t send_espnow_data(void)
     static my_data_t data;
 
 	//populate data
-	//TODO make sure no conflicting data can be sent	
 	data.message_type = CAR_COMMAND;
 	data.rf = !(gpio_get_level(RF_BUT));
 	data.rb = !(gpio_get_level(RB_BUT));
