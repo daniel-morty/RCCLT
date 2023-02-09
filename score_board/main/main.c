@@ -20,7 +20,7 @@
 
 #define OUT_PIN_SEL ((1ULL<<RF_PIN) | (1ULL<<RB_PIN) | (1ULL<<LF_PIN) | (1ULL<<LB_PIN) | (1ULL<<LASER_PIN))
 
-static const char *TAG = "car";
+static const char *TAG = "score_board";
 bool shoot_laser;
 
 
@@ -39,26 +39,34 @@ score_t scores[4];
 // #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
 // #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
 
+void log_scores(){
+	for(int i=0; i<4; i++){
+		ESP_LOGI(TAG, "car %d\tscore: %d\tlife_points: %d", i, scores[i].score, scores[i].life_points);
+	}
+}
+
 static void send_reports(uint8_t car_shot, uint8_t car_shooting){
 	//send updates to the remotes of the cars
-	//TODO log this data to console
 	my_data_t data;
 	data.message_type = SCORE_UPDATE;
+	ESP_LOGI(TAG, "senging reports to %d[shot] and %d[shooter]", car_shot, car_shooting);
 
 	//send update to car that was shot
-	scores[car_shot].score = scores[car_shot].score + 1;		//increment score
-	data.updated_score = scores[car_shot].score;						//no change
-	data.updated_life_points = scores[car_shot].life_points;
+	scores[car_shot-1].score = scores[car_shot-1].score + 1;		//increment score
+	data.updated_score = scores[car_shot-1].score;						//no change
+	data.updated_life_points = scores[car_shot-1].life_points;
 	data.car_id = car_shot;
 	send_espnow_data(data);
 
 
 	//send update to car that fired the shot
-	data.updated_score = scores[car_shooting].score;						//no change
-	scores[car_shooting].life_points = scores[car_shooting].life_points - 1; //decrement life points
-	data.updated_life_points = scores[car_shooting].life_points;
+	data.updated_score = scores[car_shooting-1].score;						//no change
+	scores[car_shooting-1].life_points = scores[car_shooting-1].life_points - 1; //decrement life points
+	data.updated_life_points = scores[car_shooting-1].life_points;
 	data.car_id = car_shooting;
 	send_espnow_data(data);
+	
+	log_scores();
 	
 	return;
 }
@@ -91,26 +99,27 @@ static esp_err_t send_espnow_data(my_data_t data)
 {
 	//TODO log data
 
-	uint8_t destination_mac[4];
+	//const uint8_t destination_mac[] = {0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0};
+	uint8_t destination_mac[6];
 	switch(data.car_id){
 		case 1:
-			for(int i=0; i<4; i++){
-				destination_mac[i] = PAIR_1_REMOTE_MAC[i];
+			for(int i=0; i<6; i++){
+				destination_mac[i] = PAIR_1_REMOTE_MAC_ARR[i];
 			}
 		break;
 		case 2:
-			for(int i=0; i<4; i++){
-				destination_mac[i] = PAIR_2_REMOTE_MAC[i];
+			for(int i=0; i<6; i++){
+				destination_mac[i] = PAIR_2_REMOTE_MAC_ARR[i];
 			}
 		break;
 		case 3:
-			for(int i=0; i<4; i++){
-				destination_mac[i] = PAIR_3_REMOTE_MAC[i];
+			for(int i=0; i<6; i++){
+				destination_mac[i] = PAIR_3_REMOTE_MAC_ARR[i];
 			}
 		break;
 		case 4:
-			for(int i=0; i<4; i++){
-				destination_mac[i] = PAIR_4_REMOTE_MAC[i];
+			for(int i=0; i<6; i++){
+				destination_mac[i] = PAIR_4_REMOTE_MAC_ARR[i];
 			}
 		break;
 	}
@@ -149,6 +158,34 @@ static void init_espnow_master(void)
     ESP_ERROR_CHECK( esp_now_init() );
     ESP_ERROR_CHECK( esp_now_register_recv_cb(recv_cb) );
     ESP_ERROR_CHECK( esp_now_set_pmk((const uint8_t *)MY_ESPNOW_PMK) );
+
+    const esp_now_peer_info_t broadcast_destination1 = {
+        .peer_addr = PAIR_1_REMOTE_MAC,
+        .channel = MY_ESPNOW_CHANNEL,
+        .ifidx = MY_ESPNOW_WIFI_IF
+    };
+    ESP_ERROR_CHECK( esp_now_add_peer(&broadcast_destination1) );
+
+    const esp_now_peer_info_t broadcast_destination2 = {
+        .peer_addr = PAIR_2_REMOTE_MAC,
+        .channel = MY_ESPNOW_CHANNEL,
+        .ifidx = MY_ESPNOW_WIFI_IF
+    };
+    ESP_ERROR_CHECK( esp_now_add_peer(&broadcast_destination2) );
+
+    const esp_now_peer_info_t broadcast_destination3 = {
+        .peer_addr = PAIR_3_REMOTE_MAC,
+        .channel = MY_ESPNOW_CHANNEL,
+        .ifidx = MY_ESPNOW_WIFI_IF
+    };
+    ESP_ERROR_CHECK( esp_now_add_peer(&broadcast_destination3) );
+
+    const esp_now_peer_info_t broadcast_destination4 = {
+        .peer_addr = PAIR_4_REMOTE_MAC,
+        .channel = MY_ESPNOW_CHANNEL,
+        .ifidx = MY_ESPNOW_WIFI_IF
+    };
+    ESP_ERROR_CHECK( esp_now_add_peer(&broadcast_destination4) );
 }
 
 void app_main(void)
@@ -178,4 +215,6 @@ void app_main(void)
 		scores[i].score = 0;
 		scores[i].life_points = STARTING_LIFE_POINTS;
 	}
+	log_scores();
+	send_reports(1,2); //for testing TODO remove this
 }

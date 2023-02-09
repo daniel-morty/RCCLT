@@ -6,6 +6,7 @@ REMOTE
 
 CAR
 ==================================================================================================
+-Add scoreboard as peer. see init_esp_slave in remote main.c to see how
 -clean up ir code. It's horrendous and causes errors that take up time
 	- is there a way to get rid of the RTOS? It's slow.
 	- order more of the correct resistor for the IR led
@@ -15,10 +16,12 @@ CAR
 
 SCORE_BOARD
 ==================================================================================================
--test
+- create website
+
 
 
 GENERAL
 ==================================================================================================
 - get ip addresses of more car remote pairs
 - clean up code, comment code, have some class
+- actually make it be a game
