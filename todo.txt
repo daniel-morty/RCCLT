@@ -1,6 +1,6 @@
 REMOTE
 ==================================================================================================
-- get screen working
+- make it possible to display scores higher than ten, and not less than zero
 
 
 

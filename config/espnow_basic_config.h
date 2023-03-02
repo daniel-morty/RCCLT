@@ -14,6 +14,7 @@
 #define LASER_PIN 18
 #define EXAMPLE_IR_TX_GPIO_NUM       18
 #define EXAMPLE_IR_RX_GPIO_NUM       3
+#define PWM_PIN 19
 
 #define RF_BUT 9
 #define RB_BUT 8
@@ -107,6 +108,6 @@ typedef struct __attribute__((packed)) {
 
 #define MY_SLAVE_DEEP_SLEEP_TIME_MS 1000
 
-#define STARTING_LIFE_POINTS 10
+#define STARTING_LIFE_POINTS 9
 
 #endif // ESPNOW_BASIC_CONFIG_H

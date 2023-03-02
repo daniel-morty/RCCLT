@@ -31,7 +31,12 @@
 
 #include "espnow_basic_config.h"
 
+#include "ssd1306.h"
+#include "font8x8_basic.h"
+
 #define IN_PIN_SEL ((1ULL<<RF_BUT) | (1ULL<<RB_BUT) | (1ULL<<LF_BUT) | (1ULL<<LB_BUT) | (1ULL<<LASER_BUT))
+
+SSD1306_t screen;
 
 static const char *TAG = "Basic_Slave";
 
@@ -47,6 +52,38 @@ static EventGroupHandle_t s_evt_group;
 #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
 // #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
 // #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
+
+static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
+{
+    
+    if(len != sizeof(my_data_t))
+    {
+        ESP_LOGE(TAG, "Unexpected data length: %d != %u", len, sizeof(my_data_t));
+        return;
+    }
+
+	//move the car accordingly
+	my_data_t *packet = data; //!note this line generates a warning. it works fine though
+								//because we checked the length above
+
+	if(packet->message_type != SCORE_UPDATE){
+		ESP_LOGE(TAG, "wrong message_type recieved");
+	} else{
+		ESP_LOGD(TAG, "score has been updated. score: %d\tlife_points%d", packet->updated_score, packet->updated_life_points);
+
+		char score_string[] = {'s', 'c', 'o', 'r', 'e', ':', ' ',  packet->updated_score + 48};
+		ssd1306_clear_screen(&screen, false);
+		ssd1306_contrast(&screen, 0xff);
+		ssd1306_display_text(&screen, 0, score_string, 8, false);
+
+		char life_points_string[] = {'l', 'i', 'f', 'e', ':', ' ',  packet->updated_life_points + 48};
+		ssd1306_display_text(&screen, 1, life_points_string, 7, false);
+	}
+
+
+    //ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &receive_config));
+	return;
+}
 
 static void packet_sent_cb(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
@@ -78,7 +115,11 @@ static void init_espnow_slave(void)
     ESP_ERROR_CHECK( esp_wifi_set_protocol(MY_ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR) );
 #endif
     ESP_ERROR_CHECK( esp_now_init() );
+	ESP_LOGD(TAG,"attempting to register send_cb");
     ESP_ERROR_CHECK( esp_now_register_send_cb(packet_sent_cb) );
+	ESP_LOGD(TAG,"send_cb registered, attempting to regiester recv_cb");
+    ESP_ERROR_CHECK( esp_now_register_recv_cb(recv_cb) );
+	ESP_LOGD(TAG, "registered!");
     ESP_ERROR_CHECK( esp_now_set_pmk((const uint8_t *)MY_ESPNOW_PMK) );
 
     // Alter this if you want to specify the gateway mac, enable encyption, etc
@@ -111,20 +152,8 @@ static esp_err_t send_espnow_data(void)
         return ESP_FAIL;
     }
 
-    // Wait for callback function to set status bit
-    //EventBits_t bits = xEventGroupWaitBits(s_evt_group, BIT(ESP_NOW_SEND_SUCCESS) | BIT(ESP_NOW_SEND_FAIL), pdTRUE, pdFALSE, 2000 / portTICK_PERIOD_MS);
-    //if ( !(bits & BIT(ESP_NOW_SEND_SUCCESS)) )
-    //{
-    //    if (bits & BIT(ESP_NOW_SEND_FAIL))
-    //    {
-    //        ESP_LOGE(TAG, "Send error");
-    //        return ESP_FAIL;
-    //    }
-    //    ESP_LOGE(TAG, "Send timed out");
-    //    return ESP_ERR_TIMEOUT;
-    //}
 
-    ESP_LOGI(TAG, "Sent!");
+    //ESP_LOGI(TAG, "Sent!"); //because we're sending so many messages, just log the failures
     return ESP_OK;
 }
 
@@ -150,7 +179,33 @@ void app_main(void)
 
 
     init_espnow_slave();
+	ESP_LOGD(TAG, "esp initialization complete");
 	
+#if CONFIG_I2C_INTERFACE
+	ESP_LOGI(TAG, "INTERFACE is i2c");
+	ESP_LOGI(TAG, "CONFIG_SDA_GPIO=%d",CONFIG_SDA_GPIO);
+	ESP_LOGI(TAG, "CONFIG_SCL_GPIO=%d",CONFIG_SCL_GPIO);
+	ESP_LOGI(TAG, "CONFIG_RESET_GPIO=%d",CONFIG_RESET_GPIO);
+	i2c_master_init(&screen, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
+#endif // CONFIG_I2C_INTERFACE
+
+#if CONFIG_FLIP
+	screen._flip = true;
+	ESP_LOGW(TAG, "Flip upside down");
+#endif
+
+#if CONFIG_SSD1306_128x64
+	ESP_LOGI(TAG, "Panel is 128x64");
+	ssd1306_init(&screen, 128, 64);
+#endif // CONFIG_SSD1306_128x64
+
+	//for testing screen
+	ssd1306_clear_screen(&screen, false);
+	ssd1306_contrast(&screen, 0xff);
+	ssd1306_display_text(&screen, 0, "Hello", 5, false);
+  	vTaskDelay(3000 / portTICK_PERIOD_MS);
+
+
 	while(1){
 		send_espnow_data();
 		vTaskDelay(10 / portTICK_PERIOD_MS);
