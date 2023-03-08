@@ -74,6 +74,7 @@ static void send_reports(uint8_t car_shot, uint8_t car_shooting){
 static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
 	//TODO clean this up, log data
+	ESP_LOGI(TAG, "in recv_cb");
     
     if(len != sizeof(my_data_t))
     {
