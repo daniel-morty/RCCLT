@@ -13,7 +13,9 @@
 #include "esp_system.h"
 #include "esp_now.h"
 #include "driver/gpio.h"
+
 #include "ir_nec_transceiver.h"
+#include "esp_now_custom.h"
 
 #include "sdkconfig.h"
 
@@ -25,25 +27,16 @@ static const char *TAG = "car";
 bool shoot_laser;
 
 
-static esp_err_t send_espnow_data(my_data_t data);
 
-typedef struct {
-    uint8_t sender_mac_addr[ESP_NOW_ETH_ALEN];
-    my_data_t data;
-} recv_packet_t;
 
-const ir_nec_scan_code_t scan_code = {
+const ir_nec_scan_code_t scan_code = { // this needs to be moved to the file that actually
+										//shoots the laser (calls rmt_transmit)
 	.address = 0x0440,
 	.command = CAR_ID, //replace with id of car TODO
 };
 
-#define MY_ESPNOW_WIFI_MODE WIFI_MODE_STA
-#define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
-// #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
-// #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
 
-static void car_hit(){
-	//TODO send report to score_board
+static void car_hit(){ //file ????
 	my_data_t data;
 	data.message_type = HIT_REPORT;
 	data.car_shooting = 1;//TODO get id of car shooting
@@ -58,81 +51,8 @@ static void car_hit(){
 	return;
 }
 
-static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
-{
-    
-    if(len != sizeof(my_data_t))
-    {
-        ESP_LOGE(TAG, "Unexpected data length: %d != %u", len, sizeof(my_data_t));
-        return;
-    }
-
-	//move the car accordingly
-	my_data_t *packet = data; //!note this line generates a warning. it works fine though
-								//because we checked the length above
-
-	if(packet->message_type != CAR_COMMAND){
-		ESP_LOGE(TAG, "wrong message_type recieved");
-	} else{
-		gpio_set_level(RF_PIN, packet->rf);
-		gpio_set_level(RB_PIN, packet->rb);
-		gpio_set_level(LF_PIN, packet->lf);
-		gpio_set_level(LB_PIN, packet->lb);
-		//gpio_set_level(LASER_PIN, packet->shoot_laser);
-		shoot_laser = packet->shoot_laser;
-		if(packet->shoot_laser){
-			//shoot the laser
-			ESP_LOGI(TAG, "setting shoot_laser");
-			//TODO make this a global variable to control laser shooting in main while loop
-			//ESP_ERROR_CHECK(rmt_transmit(tx_channel, nec_encoder, &scan_code, sizeof(scan_code), &transmit_config));
-			
-		}
-	}
-
-    //ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &receive_config));
-	return;
-}
-
-static esp_err_t send_espnow_data(my_data_t data)
-{
-    const uint8_t destination_mac[] = SCORE_BOARD_MAC;
 
 
-    // Send it
-    esp_err_t err = esp_now_send(destination_mac, (uint8_t*)&data, sizeof(data));
-    if(err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Send error (%d)", err);
-        return ESP_FAIL;
-    }
-
-
-    ESP_LOGI(TAG, "Sent!");
-    return ESP_OK;
-}
-
-static void init_espnow_master(void)
-{
-    const wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK( nvs_flash_erase() );
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( ret );
-    ESP_ERROR_CHECK( esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default() );
-    ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-    ESP_ERROR_CHECK( esp_wifi_set_mode(MY_ESPNOW_WIFI_MODE) );
-    ESP_ERROR_CHECK( esp_wifi_start() );
-#if MY_ESPNOW_ENABLE_LONG_RANGE
-    ESP_ERROR_CHECK( esp_wifi_set_protocol(MY_ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR) );
-#endif
-    ESP_ERROR_CHECK( esp_now_init() );
-    ESP_ERROR_CHECK( esp_now_register_recv_cb(recv_cb) );
-    ESP_ERROR_CHECK( esp_now_set_pmk((const uint8_t *)MY_ESPNOW_PMK) );
-}
 
 void app_main(void)
 {
