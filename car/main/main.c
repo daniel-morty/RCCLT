@@ -36,10 +36,10 @@ const ir_nec_scan_code_t scan_code = { // this needs to be moved to the file tha
 };
 
 
-static void car_hit(){ //file ????
+void car_hit(uint8_t car_shooting){ //file ????
 	my_data_t data;
 	data.message_type = HIT_REPORT;
-	data.car_shooting = 1;//TODO get id of car shooting
+	data.car_shooting = car_shooting;//TODO get id of car shooting
 	data.car_shot = CAR_ID;
 
 	//send it

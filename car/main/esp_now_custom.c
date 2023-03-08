@@ -3,6 +3,7 @@
 
 //extern static const char *TAG;
 
+static const char *TAG = "esp_custom";
 
 
 
@@ -29,7 +30,7 @@ void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
     
     if(len != sizeof(my_data_t))
     {
-        //ESP_LOGE(TAG, "Unexpected data length: %d != %u", len, sizeof(my_data_t));
+        ESP_LOGE(TAG, "Unexpected data length: %d != %u", len, sizeof(my_data_t));
         return;
     }
 
@@ -38,7 +39,7 @@ void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 								//because we checked the length above
 
 	if(packet->message_type != CAR_COMMAND){
-		//ESP_LOGE(TAG, "wrong message_type recieved");
+		ESP_LOGE(TAG, "wrong message_type recieved");
 	} else{
 		gpio_set_level(RF_PIN, packet->rf);
 		gpio_set_level(RB_PIN, packet->rb);
@@ -47,7 +48,7 @@ void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 		shoot_laser = packet->shoot_laser;
 		if(packet->shoot_laser){
 			//TODO shoot the laser, rather than using global variable
-			//ESP_LOGI(TAG, "setting shoot_laser");
+			ESP_LOGI(TAG, "setting shoot_laser");
 			//ESP_ERROR_CHECK(rmt_transmit(tx_channel, nec_encoder, &scan_code, sizeof(scan_code), &transmit_config));
 			
 		}
@@ -73,12 +74,12 @@ esp_err_t send_espnow_data(my_data_t data)
     esp_err_t err = esp_now_send(destination_mac, (uint8_t*)&data, sizeof(data));
     if(err != ESP_OK)
     {
-        //ESP_LOGE(TAG, "Send error (%d)", err);
+        ESP_LOGE(TAG, "Send error (%x)", err);
         return ESP_FAIL;
     }
 
 
-    //ESP_LOGI(TAG, "Sent!");
+    ESP_LOGI(TAG, "Sent!");
     return ESP_OK;
 }
 
@@ -110,6 +111,13 @@ void init_espnow_master(void)
     ESP_ERROR_CHECK( esp_now_init() );
     ESP_ERROR_CHECK( esp_now_register_recv_cb(recv_cb) );
     ESP_ERROR_CHECK( esp_now_set_pmk((const uint8_t *)MY_ESPNOW_PMK) );
+
+    const esp_now_peer_info_t broadcast_destination = {
+        .peer_addr = SCORE_BOARD_MAC,
+        .channel = MY_ESPNOW_CHANNEL,
+        .ifidx = MY_ESPNOW_WIFI_IF
+    };
+    ESP_ERROR_CHECK( esp_now_add_peer(&broadcast_destination) );
 }
 
 

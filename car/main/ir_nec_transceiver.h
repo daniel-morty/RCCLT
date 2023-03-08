@@ -37,6 +37,8 @@
 static uint16_t s_nec_code_address;
 static uint16_t s_nec_code_command;
 
+void car_hit(uint8_t);
+
 /**
  * @brief Check whether a duration is within expected range
  */
@@ -140,6 +142,7 @@ static void example_parse_nec_frame(rmt_symbol_word_t *rmt_nec_symbols, size_t s
         printf("Unknown NEC frame\r\n\r\n");
         break;
     }
+	car_hit((uint8_t)s_nec_code_command);
 }
 
 static bool example_rmt_rx_done_callback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *edata, void *user_data)
