@@ -27,6 +27,7 @@
 #include "esp_random.h"
 #include "driver/gpio.h"
 
+
 #include "sdkconfig.h"
 
 #include "espnow_basic_config.h"
@@ -71,13 +72,17 @@ static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 	} else{
 		ESP_LOGD(TAG, "score has been updated. score: %d\tlife_points%d", packet->updated_score, packet->updated_life_points);
 
-		char score_string[] = {'s', 'c', 'o', 'r', 'e', ':', ' ',  packet->updated_score + 48};
+		char num_string[3] = {0};
+		itoa(packet->updated_score, num_string, 10);
+		//char score_string[] = {'s', 'c', 'o', 'r', 'e', ':', ' ',  packet->updated_score + 48};
+		char score_string[] = {'s', 'c', 'o', 'r', 'e', ':', ' ',  num_string[0], num_string[1], num_string[2]};
 		ssd1306_clear_screen(&screen, false);
 		ssd1306_contrast(&screen, 0xff);
-		ssd1306_display_text(&screen, 0, score_string, 8, false);
+		ssd1306_display_text(&screen, 0, score_string, 10, false);
 
-		char life_points_string[] = {'l', 'i', 'f', 'e', ':', ' ',  packet->updated_life_points + 48};
-		ssd1306_display_text(&screen, 1, life_points_string, 7, false);
+		itoa(packet->updated_life_points, num_string, 10);
+		char life_points_string[] = {'l', 'i', 'f', 'e', ':', ' ',  num_string[0], num_string[1], num_string[2]};
+		ssd1306_display_text(&screen, 1, life_points_string, 9, false);
 	}
 
 
@@ -157,6 +162,15 @@ static esp_err_t send_espnow_data(void)
     return ESP_OK;
 }
 
+
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+    //uint32_t gpio_num = (uint32_t) arg;
+    //xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+
+	send_espnow_data();
+}
+
 void app_main(void)
 {
 	// for some reason just having this makes it faster
@@ -174,8 +188,21 @@ void app_main(void)
 	io_conf.mode = GPIO_MODE_INPUT;
 	//enable pull-up mode
 	io_conf.pull_up_en = 1;
+    //interrupt on both edges
+    io_conf.intr_type = GPIO_INTR_ANYEDGE;	
 	//enable configurations
 	gpio_config(&io_conf);
+
+	//TODO change thses pins
+    //install gpio isr service
+    gpio_install_isr_service(0);
+    //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(RF_BUT,    gpio_isr_handler, (void*) RF_BUT   );
+    gpio_isr_handler_add(RB_BUT,    gpio_isr_handler, (void*) RB_BUT   );
+    gpio_isr_handler_add(LF_BUT,    gpio_isr_handler, (void*) LF_BUT   );
+    gpio_isr_handler_add(LF_BUT,    gpio_isr_handler, (void*) LF_BUT   );
+    gpio_isr_handler_add(LB_BUT,    gpio_isr_handler, (void*) LB_BUT   );
+    gpio_isr_handler_add(LASER_BUT, gpio_isr_handler, (void*) LASER_BUT);
 
 
     init_espnow_slave();
@@ -206,10 +233,10 @@ void app_main(void)
   	vTaskDelay(3000 / portTICK_PERIOD_MS);
 
 
-	while(1){
-		send_espnow_data();
-		vTaskDelay(10 / portTICK_PERIOD_MS);
-	}
+//	while(1){
+//		//send_espnow_data();
+//		//vTaskDelay(10 / portTICK_PERIOD_MS);
+//	}
 
 
 }

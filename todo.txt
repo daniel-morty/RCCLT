@@ -1,14 +1,14 @@
 REMOTE
 ==================================================================================================
-- make it possible to display scores higher than ten, and not less than zero
 
 
 
 CAR
 ==================================================================================================
--Add scoreboard as peer. see init_esp_slave in remote main.c to see how
+- move all the functinos in ir_transiever.h to ir_transiever.c (be consistent)
 -clean up ir code in main. It's horrendous and causes errors that take up time
 	- is there a way to get rid of the RTOS? It's slow.
+		-maybe the while loop in main should just be empty
 	- order more of the correct resistor for the IR led
 -I don't like that I'm setting a global variable to shoot the laser from the main loop.
 	- can that be changed to be called when the packet is recieved?
