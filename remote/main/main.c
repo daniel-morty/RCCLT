@@ -200,7 +200,6 @@ void app_main(void)
     gpio_isr_handler_add(RF_BUT,    gpio_isr_handler, (void*) RF_BUT   );
     gpio_isr_handler_add(RB_BUT,    gpio_isr_handler, (void*) RB_BUT   );
     gpio_isr_handler_add(LF_BUT,    gpio_isr_handler, (void*) LF_BUT   );
-    gpio_isr_handler_add(LF_BUT,    gpio_isr_handler, (void*) LF_BUT   );
     gpio_isr_handler_add(LB_BUT,    gpio_isr_handler, (void*) LB_BUT   );
     gpio_isr_handler_add(LASER_BUT, gpio_isr_handler, (void*) LASER_BUT);
 
