@@ -56,5 +56,12 @@ esp_err_t send_espnow_data(my_data_t data);
 **************************************************/
 void init_espnow_master(void);
 
+/**************************************************
+* Title:
+* Summary:
+* Param:
+* Return:
+**************************************************/
+void car_hit(uint8_t car_shooting);
 
 #endif //ESP_NOW_CUSTOM_H

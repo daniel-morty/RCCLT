@@ -8,6 +8,11 @@ static const char *TAG = "esp_custom";
 
 
 extern bool shoot_laser; //TODO make this not haev to be global
+extern rmt_channel_handle_t tx_channel;
+extern rmt_encoder_handle_t nec_encoder;
+extern const ir_nec_scan_code_t scan_code;
+extern rmt_transmit_config_t transmit_config;
+
 //make the laser able to be shot from recv_cb()
 
 
@@ -46,6 +51,8 @@ void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 		gpio_set_level(LF_PIN, packet->lf);
 		gpio_set_level(LB_PIN, packet->lb);
 		shoot_laser = packet->shoot_laser;
+		//fire the laser
+		ESP_ERROR_CHECK(rmt_transmit(tx_channel, nec_encoder, &scan_code, sizeof(scan_code), &transmit_config));
 		if(packet->shoot_laser){
 			//TODO shoot the laser, rather than using global variable
 			ESP_LOGI(TAG, "setting shoot_laser");
@@ -120,4 +127,18 @@ void init_espnow_master(void)
     ESP_ERROR_CHECK( esp_now_add_peer(&broadcast_destination) );
 }
 
+void car_hit(uint8_t car_shooting){ //file ????
+	my_data_t data;
+	data.message_type = HIT_REPORT;
+	data.car_shooting = car_shooting;//TODO get id of car shooting
+	data.car_shot = CAR_ID;
+
+	//send it
+	ESP_LOGI(TAG, "sending hit report, hit by %d", car_shooting);
+	esp_err_t err = send_espnow_data(data);
+	if(err != ESP_OK){
+	ESP_LOGE(TAG, "error sending hit_report message");
+	}
+	return;
+}
 
