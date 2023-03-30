@@ -160,5 +160,6 @@ void app_main(void)
 				example_parse_nec_frame(rx_data.received_symbols, rx_data.num_symbols);
 			}
 		}
+		vTaskDelay(30 / portTICK_PERIOD_MS);
 	}
 }
