@@ -12,7 +12,8 @@ unsigned int linesGenerated;
 // The "ing"s are added by the goofy string builder
 
 int random_in_range(int x){
-	return rand() % x;
+	//return rand() % x;
+	return esp_random() % x;
 }
 
 const char constructiveVerbs[][11] = {

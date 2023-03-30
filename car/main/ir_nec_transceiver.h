@@ -131,6 +131,7 @@ static void example_parse_nec_frame(rmt_symbol_word_t *rmt_nec_symbols, size_t s
     case 34: // NEC normal frame
         if (nec_parse_frame(rmt_nec_symbols)) {
             printf("Address=%04X, Command=%04X\r\n\r\n", s_nec_code_address, s_nec_code_command);
+			car_hit((uint8_t)s_nec_code_command);
         }
         break;
     case 2: // NEC repeat frame
@@ -142,7 +143,6 @@ static void example_parse_nec_frame(rmt_symbol_word_t *rmt_nec_symbols, size_t s
         printf("Unknown NEC frame\r\n\r\n");
         break;
     }
-	car_hit((uint8_t)s_nec_code_command);
 }
 
 static bool example_rmt_rx_done_callback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *edata, void *user_data)

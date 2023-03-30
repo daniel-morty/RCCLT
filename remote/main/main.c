@@ -31,6 +31,7 @@
 #include "sdkconfig.h"
 
 #include "espnow_basic_config.h"
+#include <flavortext.h>
 
 #include "ssd1306.h"
 #include "font8x8_basic.h"
@@ -54,6 +55,40 @@ static EventGroupHandle_t s_evt_group;
 // #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
 // #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
 
+//handle for boot text task
+TaskHandle_t boot_text_handle = NULL;
+
+/**************************************************
+* Title: boot text
+* Summary: prints boot text to screen while waiting for a message form base station
+* Param:	none
+* Return:	none
+**************************************************/
+void boot_text_task(void *args){
+	while(1){
+		ssd1306_clear_screen(&screen, false);
+		ssd1306_contrast(&screen, 0xff);
+		char boot_text[20];
+		getFullLine(boot_text, true);
+		char *e = strchr(boot_text, ' ');
+		int space = (int)(e-boot_text);
+		ssd1306_display_text(&screen, 0, boot_text, space, false);
+		ssd1306_display_text(&screen, 1, &(boot_text[space]), 20-space, false);
+		
+		ssd1306_display_text(&screen, 3, "connecting to", 13, true);
+		ssd1306_display_text(&screen, 4, "base station", 13, true);
+		vTaskDelay(3000 / portTICK_PERIOD_MS);
+	}
+}
+
+/**************************************************
+* Title:	recv_cb
+* Summary:	call_back for when espnow messages are recieved, updates the socres and prints to screen
+* Param:	mac addr-> mac address of the sender (base station) 
+*			data-> data packet of my_data_t
+*			len -> len of message recieved
+* Return:	none
+**************************************************/
 static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
     
@@ -62,6 +97,8 @@ static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
         ESP_LOGE(TAG, "Unexpected data length: %d != %u", len, sizeof(my_data_t));
         return;
     }
+	//kill boot_text task
+	vTaskSuspend(boot_text_handle);
 
 	//move the car accordingly
 	my_data_t *packet = data; //!note this line generates a warning. it works fine though
@@ -226,10 +263,16 @@ void app_main(void)
 #endif // CONFIG_SSD1306_128x64
 
 	//for testing screen
-	ssd1306_clear_screen(&screen, false);
-	ssd1306_contrast(&screen, 0xff);
-	ssd1306_display_text(&screen, 0, "Hello", 5, false);
-  	vTaskDelay(3000 / portTICK_PERIOD_MS);
+	//ssd1306_clear_screen(&screen, false);
+	//ssd1306_contrast(&screen, 0xff);
+	//char boot_text[20];
+	//getFullLine(boot_text, true);
+	//char *e = strchr(boot_text, ' ');
+	//int space = (int)(e-boot_text);
+	//ssd1306_display_text(&screen, 0, boot_text, space, false);
+	//ssd1306_display_text(&screen, 1, &(boot_text[space+1]), 20-space, false);
+  	//vTaskDelay(3000 / portTICK_PERIOD_MS);
+	xTaskCreate(boot_text_task, "boot_text_task", 2000, NULL, 10, &boot_text_handle);
 
 
 //	while(1){
