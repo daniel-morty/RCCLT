@@ -4,8 +4,12 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#define INKY 0
+#define BLINKY 1
+#define PINKY 2
+#define CLYDE 3
 //change this value to compile for different care remote pairs
-#define CAR_REMOTE_PAIR 1
+#define CAR_REMOTE_PAIR PINKY
 
 #define RF_PIN 9
 #define RB_PIN 8
@@ -60,41 +64,45 @@ typedef struct __attribute__((packed)) {
 
 #define SCORE_BOARD_MAC {0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5c}
 
+//INKY
 #define PAIR_1_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
 #define PAIR_1_REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb0}
 #define PAIR_1_REMOTE_MAC_ARR	(uint8_t[])PAIR_1_REMOTE_MAC
 
-#define PAIR_2_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}//TODO UPDATE THIS
-#define PAIR_2_REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb1}//TODO UPDATE THIS
-#define PAIR_2_REMOTE_MAC_ARR	(uint8_t[])PAIR_2_REMOTE_MAC
+//BLINKY
+#define PAIR_2_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x8a, 0x30}
+#define PAIR_2_REMOTE_MAC	{0x48, 0x27, 0xe2, 0xad, 0x03, 0x60}
+#define PAIR_2_REMOTE_MAC_ARR	(uint8_t[])PAIR_4_REMOTE_MAC
 
-#define PAIR_3_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}//TODO UPDATE THIS
-#define PAIR_3_REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb2}//TODO UPDATE THIS
+//PINKY
+#define PAIR_3_CAR_MAC		{0x48, 0x27, 0xe2, 0xad, 0x92, 0x30}
+#define PAIR_3_REMOTE_MAC	{0xec, 0xda, 0x3b, 0x0e, 0xfd, 0xe0}
 #define PAIR_3_REMOTE_MAC_ARR	(uint8_t[])PAIR_3_REMOTE_MAC
 
-#define PAIR_4_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}//TODO UPDATE THIS
-#define PAIR_4_REMOTE_MAC	{0xf4, 0x12, 0xfa, 0x1b, 0x3e, 0xb3}//TODO UPDATE THIS
-#define PAIR_4_REMOTE_MAC_ARR	(uint8_t[])PAIR_4_REMOTE_MAC
+//CLYDE
+#define PAIR_4_CAR_MAC		{0x34, 0x85, 0x18, 0x21, 0x8c, 0xc4}
+#define PAIR_4_REMOTE_MAC	{0x58, 0xcf, 0x79, 0xe9, 0x8c, 0xec}
+#define PAIR_4_REMOTE_MAC_ARR	(uint8_t[])PAIR_2_REMOTE_MAC
 
-#if CAR_REMOTE_PAIR == 1
+#if CAR_REMOTE_PAIR == INKY
 	#define CAR_MAC		PAIR_1_CAR_MAC	 
 	#define REMOTE_MAC	PAIR_1_REMOTE_MAC
 	#define CAR_ID 1
 	#define REMOTE_ID 1
 
-#elif CAR_REMOTE_PAIR == 2
+#elif CAR_REMOTE_PAIR == BLINKY
 	#define CAR_MAC		PAIR_2_CAR_MAC	 
 	#define REMOTE_MAC	PAIR_2_REMOTE_MAC
 	#define CAR_ID 2
 	#define REMOTE_ID 2
 
-#elif CAR_REMOTE_PAIR == 3
+#elif CAR_REMOTE_PAIR == PINKY
 	#define CAR_MAC		PAIR_3_CAR_MAC	 
 	#define REMOTE_MAC	PAIR_3_REMOTE_MAC
 	#define CAR_ID 3
 	#define REMOTE_ID 3
 
-#elif CAR_REMOTE_PAIR == 4
+#elif CAR_REMOTE_PAIR == CLYDE
 	#define CAR_MAC		PAIR_4_CAR_MAC	 
 	#define REMOTE_MAC	PAIR_4_REMOTE_MAC
 	#define CAR_ID 4
