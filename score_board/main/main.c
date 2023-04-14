@@ -17,12 +17,14 @@
 #include "sdkconfig.h"
 
 #include "espnow_basic_config.h"
+#include "webserver.h"
 
 #define OUT_PIN_SEL ((1ULL<<RF_PIN) | (1ULL<<RB_PIN) | (1ULL<<LF_PIN) | (1ULL<<LB_PIN) | (1ULL<<LASER_PIN))
 
 static const char *TAG = "score_board";
 bool shoot_laser;
 
+//extern static const httpd_uri_t hello;
 
 static esp_err_t send_espnow_data(my_data_t data);
 
@@ -34,10 +36,10 @@ typedef struct {
 //set up data structure for keeping score
 score_t scores[4];
 
-#define MY_ESPNOW_WIFI_MODE WIFI_MODE_STA
-#define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
-// #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
-// #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
+//#define MY_ESPNOW_WIFI_MODE WIFI_MODE_STA
+//#define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
+ #define MY_ESPNOW_WIFI_MODE WIFI_MODE_AP
+ #define MY_ESPNOW_WIFI_IF   ESP_IF_WIFI_AP
 
 void log_scores(){
 	for(int i=0; i<4; i++){
@@ -89,7 +91,7 @@ static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 	if(packet->message_type != CAR_COMMAND){
 		ESP_LOGE(TAG, "wrong message_type recieved");
 	} else{
-		send_reports(packet->car_shot, packet->car_shooting); //update scores and foreward too remotes
+		send_reports(packet->car_shot, packet->car_shooting); //update scores and foreward to remotes
 	}
 
     //ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &receive_config));
@@ -209,13 +211,50 @@ void app_main(void)
 
     
     init_espnow_master();
+
+    static httpd_handle_t server = NULL; //from simple main.c
+
+    //Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
+    wifi_init_softap();
+
+	//from http simple main.c
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
 	
 
-	//initialize scores
+	my_data_t data;
+	data.message_type = SCORE_UPDATE;
 	for(int i=0; i<4; i++){
+		//initialize scores
 		scores[i].score = 0;
 		scores[i].life_points = STARTING_LIFE_POINTS;
+	
+		//send messages to init screens on remotes
+		data.car_id = i;
+		data.updated_score = scores[i].score;
+		data.updated_life_points = scores[i].life_points;
+		send_espnow_data(data);
 	}
+
+	ESP_LOGI(TAG, "\n\n");
+	ESP_LOGI(TAG, "STARTING GAME");
 	log_scores();
-	send_reports(1,2); //for testing TODO remove this
+
+	//!note for testing
+	while(1){
+		vTaskDelay(5000/portTICK_PERIOD_MS);
+		send_reports(1,2); //for testing TODO remove this
+		vTaskDelay(3000/portTICK_PERIOD_MS);
+		send_reports(2,3); //for testing TODO remove this
+		vTaskDelay(3000/portTICK_PERIOD_MS);
+		send_reports(3,4); //for testing TODO remove this
+	}
 }
