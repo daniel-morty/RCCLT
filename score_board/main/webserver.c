@@ -9,7 +9,7 @@ extern score_t scores[4];
 esp_err_t hello_get_handler(httpd_req_t *req)
 {
 
-	char web_string[2000];
+	char web_string[1000];
 	char * raw_str = "<head>"
 				"<style>"
 					".score {display: inline-block; width: 48%%; margin: 5px}"
@@ -19,7 +19,7 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 			"</head>"
 			"<body>"
 				"<div class=\"score\" style=\"background-color: #33fffb\">"
-					"<h1>Inky\%</h1>"
+					"<h1>Inky</h1>"
 					"<h2>score: %d</h2>"
 					"<h2>life: %d</h2>"
 				"</div>"
@@ -41,7 +41,7 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 			"</body>"
 			"</html>"
 			"<script>"
-				"setTimeout(()=>{location.reload();}, 100);"
+				"setTimeout(()=>{location.reload();}, 1000);"
 				"function sendRequest() {"
 					"var xhttp = new XMLHttpRequest();"
 					"xhttp.open(\"GET\", \"/\", true);"
@@ -54,6 +54,7 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 									scores[PINKY].score, scores[PINKY].life_points,
 									scores[CLYDE].score, scores[CLYDE].life_points);
 
+	ESP_LOGI(TAG, "length of web_string: %d", strlen(web_string));
 
     httpd_resp_send(req, web_string, HTTPD_RESP_USE_STRLEN);
 

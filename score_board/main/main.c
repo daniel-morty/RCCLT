@@ -88,7 +88,7 @@ static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 	my_data_t *packet = data; //!note this line generates a warning. it works fine though
 								//because we checked the length above
 
-	if(packet->message_type != CAR_COMMAND){
+	if(packet->message_type != HIT_REPORT){
 		ESP_LOGE(TAG, "wrong message_type recieved");
 	} else{
 		send_reports(packet->car_shot, packet->car_shooting); //update scores and foreward to remotes
@@ -249,12 +249,12 @@ void app_main(void)
 	log_scores();
 
 	//!note for testing
-	while(1){
-		vTaskDelay(5000/portTICK_PERIOD_MS);
-		send_reports(1,2); //for testing TODO remove this
-		vTaskDelay(3000/portTICK_PERIOD_MS);
-		send_reports(2,3); //for testing TODO remove this
-		vTaskDelay(3000/portTICK_PERIOD_MS);
-		send_reports(3,4); //for testing TODO remove this
-	}
+	//while(1){
+	//	vTaskDelay(5000/portTICK_PERIOD_MS);
+	//	send_reports(1,2); //for testing TODO remove this
+	//	vTaskDelay(3000/portTICK_PERIOD_MS);
+	//	send_reports(2,3); //for testing TODO remove this
+	//	vTaskDelay(3000/portTICK_PERIOD_MS);
+	//	send_reports(3,4); //for testing TODO remove this
+	//}
 }
