@@ -9,7 +9,7 @@
 #define PINKY 2
 #define CLYDE 3
 //change this value to compile for different care remote pairs
-#define CAR_REMOTE_PAIR PINKY
+#define CAR_REMOTE_PAIR INKY
 
 #define RF_PIN 9
 #define RB_PIN 8
@@ -62,7 +62,7 @@ typedef struct __attribute__((packed)) {
 	uint8_t car_id;
 } my_data_t;
 
-#define SCORE_BOARD_MAC {0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5c}
+#define SCORE_BOARD_MAC {0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5d}
 
 //INKY
 #define PAIR_1_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
