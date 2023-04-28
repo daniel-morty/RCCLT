@@ -1,15 +1,11 @@
 #include "esp_now_custom.h"
+#include "driver/rmt.h"
 
 
 //extern static const char *TAG;
 
 static const char *TAG = "esp_custom";
-
-
-
-extern bool shoot_laser; //TODO make this not haev to be global
-//make the laser able to be shot from recv_cb()
-
+extern rmt_item32_t items [8];
 
 typedef struct {
     uint8_t sender_mac_addr[ESP_NOW_ETH_ALEN];
@@ -45,11 +41,10 @@ void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 		gpio_set_level(RB_PIN, packet->rb);
 		gpio_set_level(LF_PIN, packet->lf);
 		gpio_set_level(LB_PIN, packet->lb);
-		shoot_laser = packet->shoot_laser;
 		if(packet->shoot_laser){
-			//TODO shoot the laser, rather than using global variable
-			ESP_LOGI(TAG, "setting shoot_laser");
-			//ESP_ERROR_CHECK(rmt_transmit(tx_channel, nec_encoder, &scan_code, sizeof(scan_code), &transmit_config));
+			ESP_LOGI(TAG, "shooting laser");
+			//fire the laser
+			rmt_write_items(RMT_TX_CHANNEL, items, 8, true);
 			
 		}
 	}

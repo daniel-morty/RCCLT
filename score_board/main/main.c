@@ -51,19 +51,19 @@ static void send_reports(uint8_t car_shot, uint8_t car_shooting){
 	//send updates to the remotes of the cars
 	my_data_t data;
 	data.message_type = SCORE_UPDATE;
-	ESP_LOGI(TAG, "senging reports to %d[shot] and %d[shooter]", car_shot, car_shooting);
+	ESP_LOGI(TAG, "sending reports to %d[shot] and %d[shooter]", car_shot, car_shooting);
 
 	//send update to car that was shot
-	scores[car_shot-1].score = scores[car_shot-1].score + 1;		//increment score
-	data.updated_score = scores[car_shot-1].score;						//no change
+	data.updated_score = scores[car_shot-1].score;						
+	scores[car_shot-1].life_points = scores[car_shot-1].life_points - 1; //decrement life points
 	data.updated_life_points = scores[car_shot-1].life_points;
 	data.car_id = car_shot;
 	send_espnow_data(data);
 
 
 	//send update to car that fired the shot
-	data.updated_score = scores[car_shooting-1].score;						//no change
-	scores[car_shooting-1].life_points = scores[car_shooting-1].life_points - 1; //decrement life points
+	scores[car_shooting-1].score = scores[car_shooting-1].score + 1;		//increment score
+	data.updated_score = scores[car_shooting-1].score;						
 	data.updated_life_points = scores[car_shooting-1].life_points;
 	data.car_id = car_shooting;
 	send_espnow_data(data);
@@ -126,6 +126,12 @@ static esp_err_t send_espnow_data(my_data_t data)
 			}
 		break;
 	}
+
+		ESP_LOGI(TAG, "sending to %d", data.car_id);
+		for(int i=0; i<6; i++){
+			ESP_LOGI(TAG, "%x", destination_mac[i]);
+		}
+		ESP_LOGI(TAG, "");
 
     // Send it
 	esp_err_t err = esp_now_send(destination_mac, (uint8_t*)&data, sizeof(data));
@@ -238,7 +244,7 @@ void app_main(void)
 		scores[i].life_points = STARTING_LIFE_POINTS;
 	
 		//send messages to init screens on remotes
-		data.car_id = i;
+		data.car_id = i+1;
 		data.updated_score = scores[i].score;
 		data.updated_life_points = scores[i].life_points;
 		send_espnow_data(data);

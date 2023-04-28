@@ -91,6 +91,7 @@ void boot_text_task(void *args){
 **************************************************/
 static void recv_cb(const uint8_t *mac_addr, const uint8_t *data, int len)
 {
+	ESP_LOGI(TAG, "message received");
     
     if(len != sizeof(my_data_t))
     {

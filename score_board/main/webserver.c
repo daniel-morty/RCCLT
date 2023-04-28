@@ -49,12 +49,12 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 				"}"
 			"</script>";
 
-	sprintf( web_string, raw_str, scores[INKY].score, scores[INKY].life_points,
-									scores[BLINKY].score, scores[BLINKY].life_points,
-									scores[PINKY].score, scores[PINKY].life_points,
-									scores[CLYDE].score, scores[CLYDE].life_points);
+	sprintf( web_string, raw_str, scores[INKY-1].score, scores[INKY-1].life_points,
+									scores[BLINKY-1].score, scores[BLINKY-1].life_points,
+									scores[PINKY-1].score, scores[PINKY-1].life_points,
+									scores[CLYDE-1].score, scores[CLYDE-1].life_points);
 
-	ESP_LOGI(TAG, "length of web_string: %d", strlen(web_string));
+	//ESP_LOGI(TAG, "length of web_string: %d", strlen(web_string));
 
     httpd_resp_send(req, web_string, HTTPD_RESP_USE_STRLEN);
 

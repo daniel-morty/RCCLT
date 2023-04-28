@@ -13,8 +13,8 @@
 #include "esp_system.h"
 #include "esp_now.h"
 #include "driver/gpio.h"
+#include "driver/rmt.h"
 
-#include "ir_nec_transceiver.h"
 #include "esp_now_custom.h"
 
 #include "sdkconfig.h"
@@ -24,17 +24,166 @@
 #define OUT_PIN_SEL ((1ULL<<RF_PIN) | (1ULL<<RB_PIN) | (1ULL<<LF_PIN) | (1ULL<<LB_PIN) | (1ULL<<LASER_PIN))
 
 static const char *TAG = "car";
-bool shoot_laser;
+rmt_item32_t items [8];
 
 
+void car_hit(uint8_t car_shooting);
+
+void ir_rx_task(void *arg) {
+    uint8_t data;
+    RingbufHandle_t rb = NULL;
+
+    // Get the RMT RX ring buffer
+    rmt_get_ringbuf_handle(RMT_RX_CHANNEL, &rb);
+    rmt_rx_start(RMT_RX_CHANNEL, 1);
+
+    while (1) {
+        size_t rx_size = 0;
+        rmt_item32_t *received_items = (rmt_item32_t *)xRingbufferReceive(rb, &rx_size, portMAX_DELAY);
+		ESP_LOGI(TAG, "items received");
+        if (received_items) {
+            int num_items = rx_size / sizeof(rmt_item32_t);
+			ESP_LOGI(TAG, "NUM ITEMS: %d", num_items);
+
+            data = 0;
+			ESP_LOGI(TAG, "before for loop");
+            for (int i = 0; i < 8 && i < num_items; ++i) {
+                if (received_items[i].level0 == 0 && received_items[i].level1 == 1) {
+					ESP_LOGI(TAG, "bit %d receiverd", i);
+					ESP_LOGI(TAG, "DURATION 0 : %d", received_items[i].duration0);
+					ESP_LOGI(TAG, "DURATION 1 : %d", received_items[i].duration1);
+                    if (received_items[i].duration0 > 500 && received_items[i].duration0 > 1500 && received_items[i].duration1 < 1500) {
+                        data |= (1 << i);
+                    }
+                }
+            }
+			ESP_LOGI(TAG, "after first for loop");
+			ESP_LOGI(TAG, "data receiverd %x\n\n", data);
+			switch(data){
+				case 0xfc:	//Inky
+					if (CAR_REMOTE_PAIR != INKY) car_hit(INKY);
+					break;
+				case 0xf9:	//BLINKY
+					if (CAR_REMOTE_PAIR != BLINKY) car_hit(BLINKY);
+					break;
+				case 0xf3:	//PINKY
+					if (CAR_REMOTE_PAIR != PINKY) car_hit(PINKY);
+					break;
+				case 0xe7:	//CLYDE
+					if (CAR_REMOTE_PAIR != CLYDE) car_hit(CLYDE);
+					break;
+				default:
+					break;
+			}
+
+            // Check if stop bit is valid
+            //if (num_items >= 9 && received_items[8].level0 == 1 && received_items[8].level1 == 0 && received_items[8].duration0 > 1500 && received_items[8].duration1 > 500 && received_items[8].duration1 < 1500) {
+            //    car_hit(data);
+            //}
+
+            // Free the memory allocated for received_items
+            vRingbufferReturnItem(rb, (void *)received_items);
+			ESP_LOGI(TAG, "after memory is freed");
+        }
+    }
+}
+
+static void IR_init(){
+	//initialize IR receiving
+	rmt_config_t rmt_tx_config = {
+		.channel = RMT_TX_CHANNEL,
+		.gpio_num = LASER_PIN,
+		.clk_div = 150,
+		.rmt_mode = RMT_MODE_TX,
+		.tx_config = {
+			.carrier_freq_hz = 38000,
+			.carrier_duty_percent = 50,
+			.carrier_level = RMT_CARRIER_LEVEL_HIGH,
+			.carrier_en = true,
+			.loop_en = false,
+			.idle_level = RMT_IDLE_LEVEL_LOW,
+			.idle_output_en = true,
+		},
+		.mem_block_num = 1,
+	};
+
+	rmt_config_t rmt_rx_config = {
+		.channel = RMT_RX_CHANNEL,
+		.gpio_num = IR_RX_PIN,
+		.clk_div = 150,
+		.rmt_mode = RMT_MODE_RX,
+		.rx_config = {
+			.carrier_freq_hz = 38000,
+			.carrier_duty_percent = 50,
+			.carrier_level = RMT_CARRIER_LEVEL_HIGH,
+			.rm_carrier = true,
+			.filter_ticks_thresh = 100,
+			.filter_en = true,
+			.idle_threshold = 12000,
+		},
+		.mem_block_num = 1,
+	};
+	
+	ESP_LOGI(TAG, "init tx channel");
+	ESP_ERROR_CHECK(rmt_config(&rmt_tx_config));
+	ESP_ERROR_CHECK(rmt_driver_install(rmt_tx_config.channel, 0, 0));
+	ESP_LOGI(TAG, "init rx channel");
+	ESP_ERROR_CHECK(rmt_config(&rmt_rx_config));
+	ESP_ERROR_CHECK(rmt_driver_install(rmt_rx_config.channel, 1000, 0));
 
 
-const ir_nec_scan_code_t scan_code = { // this needs to be moved to the file that actually
-										//shoots the laser (calls rmt_transmit)
-	.address = 0x0440,
-	.command = CAR_ID, //replace with id of car TODO
-};
+	//start the RMT receiver
+	rmt_rx_start(RMT_RX_CHANNEL, true);
 
+	//create IR receive task
+	xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, tskIDLE_PRIORITY, NULL);
+	
+
+	//create the message for shooting it later
+	uint8_t data;
+	switch(CAR_REMOTE_PAIR){
+		case INKY:
+			data = 2;
+			break;
+		case BLINKY:
+			data = 4;
+			break;
+		case PINKY:
+			data = 8;
+			break;
+		case CLYDE:
+			data = 16;
+			break;
+		default:
+			data = 255;
+	}
+	memset(items, 0, sizeof(items));
+
+	for(int i=0; i<8; ++i){
+		if(data & (1 << i)){
+			items[i].duration0 = 2000;
+			items[i].level0 = 0;
+			items[i].duration1 = 1000;
+			items[i].level1 = 1;
+		} else {
+			items[i].duration0 = 1000;
+			items[i].level0 = 0;
+			items[i].duration1 = 2000;
+			items[i].level1 = 1;
+		}
+	}
+		//items[8].duration0 = 1000;
+		//items[8].level0 = 0;
+		//items[8].duration1 = 2000;
+		//items[8].level1 = 1;
+
+	for(int i=0; i<8; i++){
+		ESP_LOGI(TAG, "BIT %d", i);
+		ESP_LOGI(TAG, "duration 0: %d", items[i].duration0);
+		ESP_LOGI(TAG, "duration 1: %d", items[i].duration1);
+		ESP_LOGI(TAG, "");
+	}
+}
 
 void car_hit(uint8_t car_shooting){ //file ????
 	my_data_t data;
@@ -50,6 +199,7 @@ void car_hit(uint8_t car_shooting){ //file ????
 	}
 	return;
 }
+
 
 
 
@@ -73,93 +223,17 @@ void app_main(void)
     gpio_config(&io_conf);
 
     
+	//init espnow
     init_espnow_master();
 
-//from here to bottom is ir stuff. clean it up TODO
-	rmt_channel_handle_t tx_channel = NULL;
-	rmt_encoder_handle_t nec_encoder = NULL;
-	// this example won't send NEC frames in a loop
-	rmt_transmit_config_t transmit_config = {
-		.loop_count = 0, // no loop
-	};
-	rmt_channel_handle_t rx_channel = NULL;
-	// save the received RMT symbols
-	rmt_symbol_word_t raw_symbols[64]; // 64 symbols should be sufficient for a standard NEC frame
-	rmt_rx_done_event_data_t rx_data;
-	// the following timing requirement is based on NEC protocol
-	rmt_receive_config_t receive_config = {
-		.signal_range_min_ns = 1250,     // the shortest duration for NEC signal is 560us, 1250ns < 560us, valid signal won't be treated as noise
-		.signal_range_max_ns = 12000000, // the longest duration for NEC signal is 9000us, 12000000ns > 9000us, the receive won't stop early
-	};
+	//init ir
+	vTaskDelay(2000 /portTICK_PERIOD_MS);
+	IR_init();
 
-
-    ESP_LOGI(TAG, "create RMT RX channel");
-    rmt_rx_channel_config_t rx_channel_cfg = {
-        .clk_src = RMT_CLK_SRC_DEFAULT,
-        .resolution_hz = EXAMPLE_IR_RESOLUTION_HZ,
-        .mem_block_symbols = 64, // amount of RMT symbols that the channel can store at a time
-        .gpio_num = EXAMPLE_IR_RX_GPIO_NUM,
-    };
-    ESP_ERROR_CHECK(rmt_new_rx_channel(&rx_channel_cfg, &rx_channel));
-
-    ESP_LOGI(TAG, "register RX done callback");
-    QueueHandle_t receive_queue = xQueueCreate(1, sizeof(rmt_rx_done_event_data_t));
-    assert(receive_queue);
-    rmt_rx_event_callbacks_t cbs = {
-        .on_recv_done = example_rmt_rx_done_callback,
-    };
-    ESP_ERROR_CHECK(rmt_rx_register_event_callbacks(rx_channel, &cbs, receive_queue));
-
-
-    ESP_LOGI(TAG, "create RMT TX channel");
-    rmt_tx_channel_config_t tx_channel_cfg = {
-        .clk_src = RMT_CLK_SRC_DEFAULT,
-        .resolution_hz = EXAMPLE_IR_RESOLUTION_HZ,
-        .mem_block_symbols = 64, // amount of RMT symbols that the channel can store at a time
-        .trans_queue_depth = 4,  // number of transactions that allowed to pending in the background, this example won't queue multiple transactions, so queue depth > 1 is sufficient
-        .gpio_num = EXAMPLE_IR_TX_GPIO_NUM,
-    };
-    ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_channel_cfg, &tx_channel));
-
-    ESP_LOGI(TAG, "modulate carrier to TX channel");
-    rmt_carrier_config_t carrier_cfg = {
-        .duty_cycle = 0.33,
-        .frequency_hz = 38000, // 38KHz
-    };
-    ESP_ERROR_CHECK(rmt_apply_carrier(tx_channel, &carrier_cfg));
-
-
-    ESP_LOGI(TAG, "install IR NEC encoder");
-    ir_nec_encoder_config_t nec_encoder_cfg = {
-        .resolution = EXAMPLE_IR_RESOLUTION_HZ,
-    };
-    ESP_ERROR_CHECK(rmt_new_ir_nec_encoder(&nec_encoder_cfg, &nec_encoder));
-
-    ESP_LOGI(TAG, "enable RMT TX and RX channels");
-    ESP_ERROR_CHECK(rmt_enable(tx_channel));
-    ESP_ERROR_CHECK(rmt_enable(rx_channel));
-
-    ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &receive_config));
-    if (xQueueReceive(receive_queue, &rx_data, pdMS_TO_TICKS(1000)) == pdPASS) {
-        // parse the receive symbols and print the result
-        example_parse_nec_frame(rx_data.received_symbols, rx_data.num_symbols);
-    }
 
 	ESP_LOGI(TAG, "before main loop");
-
-
-
-	while(true){
-		if(shoot_laser){
-			shoot_laser = false;
-			ESP_LOGI(TAG, "shooting the laser from main");
-			ESP_ERROR_CHECK(rmt_transmit(tx_channel, nec_encoder, &scan_code, sizeof(scan_code), &transmit_config));
-			ESP_ERROR_CHECK(rmt_receive(rx_channel, raw_symbols, sizeof(raw_symbols), &receive_config));
-			if (xQueueReceive(receive_queue, &rx_data, pdMS_TO_TICKS(1000)) == pdPASS) {
-				// parse the receive symbols and print the result
-				example_parse_nec_frame(rx_data.received_symbols, rx_data.num_symbols);
-			}
-		}
-		vTaskDelay(30 / portTICK_PERIOD_MS);
+	while(1){
+		vTaskDelay(1000 / portTICK_PERIOD_MS);	
 	}
+
 }

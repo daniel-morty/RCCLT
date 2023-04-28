@@ -4,21 +4,23 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#define INKY 0
-#define BLINKY 1
-#define PINKY 2
-#define CLYDE 3
+#define INKY	1
+#define BLINKY	2
+#define PINKY	3
+#define CLYDE	4
 //change this value to compile for different care remote pairs
-#define CAR_REMOTE_PAIR INKY
+#define CAR_REMOTE_PAIR BLINKY
 
 #define RF_PIN 9
 #define RB_PIN 8
 #define LF_PIN 7
 #define LB_PIN 6
 #define LASER_PIN 18
-#define EXAMPLE_IR_TX_GPIO_NUM       18
-#define EXAMPLE_IR_RX_GPIO_NUM       3
+#define IR_RX_PIN 3
 #define PWM_PIN 19
+
+#define RMT_TX_CHANNEL RMT_CHANNEL_0
+#define RMT_RX_CHANNEL RMT_CHANNEL_2
 
 #define RF_BUT 9
 #define RB_BUT 8
@@ -72,7 +74,7 @@ typedef struct __attribute__((packed)) {
 //BLINKY
 #define PAIR_2_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x8a, 0x30}
 #define PAIR_2_REMOTE_MAC	{0x48, 0x27, 0xe2, 0xad, 0x03, 0x60}
-#define PAIR_2_REMOTE_MAC_ARR	(uint8_t[])PAIR_4_REMOTE_MAC
+#define PAIR_2_REMOTE_MAC_ARR	(uint8_t[])PAIR_2_REMOTE_MAC
 
 //PINKY
 #define PAIR_3_CAR_MAC		{0x48, 0x27, 0xe2, 0xad, 0x92, 0x30}
@@ -82,7 +84,7 @@ typedef struct __attribute__((packed)) {
 //CLYDE
 #define PAIR_4_CAR_MAC		{0x34, 0x85, 0x18, 0x21, 0x8c, 0xc4}
 #define PAIR_4_REMOTE_MAC	{0x58, 0xcf, 0x79, 0xe9, 0x8c, 0xec}
-#define PAIR_4_REMOTE_MAC_ARR	(uint8_t[])PAIR_2_REMOTE_MAC
+#define PAIR_4_REMOTE_MAC_ARR	(uint8_t[])PAIR_4_REMOTE_MAC
 
 #if CAR_REMOTE_PAIR == INKY
 	#define CAR_MAC		PAIR_1_CAR_MAC	 

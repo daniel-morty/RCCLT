@@ -16,7 +16,6 @@
 #include "esp_now.h"
 #include "driver/gpio.h"
 
-#include "ir_nec_transceiver.h"
 
 #include "sdkconfig.h"
 
