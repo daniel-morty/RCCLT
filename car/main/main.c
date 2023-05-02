@@ -233,7 +233,11 @@ void app_main(void)
 
 	ESP_LOGI(TAG, "before main loop");
 	while(1){
-		vTaskDelay(1000 / portTICK_PERIOD_MS);	
+		gpio_set_level(RF_PIN, 0);
+		gpio_set_level(RB_PIN, 0);
+		gpio_set_level(LF_PIN, 0);
+		gpio_set_level(LB_PIN, 0);
+		vTaskDelay(750 / portTICK_PERIOD_MS);	
 	}
 
 }

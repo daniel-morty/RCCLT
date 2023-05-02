@@ -9,7 +9,7 @@
 #define PINKY	3
 #define CLYDE	4
 //change this value to compile for different care remote pairs
-#define CAR_REMOTE_PAIR BLINKY
+#define CAR_REMOTE_PAIR INKY
 
 #define RF_PIN 9
 #define RB_PIN 8
@@ -67,8 +67,8 @@ typedef struct __attribute__((packed)) {
 #define SCORE_BOARD_MAC {0x58, 0xcf, 0x79, 0xe9, 0xc3, 0x5d}
 
 //INKY
-#define PAIR_1_CAR_MAC		{0xf4, 0x12, 0xfa, 0x1b, 0x84, 0x88}
-#define PAIR_1_REMOTE_MAC	{0x48, 0x27, 0xe2, 0xae, 0x17, 0xd8}
+#define PAIR_1_CAR_MAC		{0xec, 0xda, 0x3b, 0x0f, 0x20, 0x44}
+#define PAIR_1_REMOTE_MAC	{0x34, 0x85, 0x18, 0x23, 0x7e, 0xb0}
 #define PAIR_1_REMOTE_MAC_ARR	(uint8_t[])PAIR_1_REMOTE_MAC
 
 //BLINKY
@@ -83,7 +83,7 @@ typedef struct __attribute__((packed)) {
 
 //CLYDE
 #define PAIR_4_CAR_MAC		{0x34, 0x85, 0x18, 0x21, 0x8c, 0xc4}
-#define PAIR_4_REMOTE_MAC	{0x58, 0xcf, 0x79, 0xe9, 0x8c, 0xec}
+#define PAIR_4_REMOTE_MAC	{0x34, 0x85, 0x18, 0x23, 0x76, 0xf4}
 #define PAIR_4_REMOTE_MAC_ARR	(uint8_t[])PAIR_4_REMOTE_MAC
 
 #if CAR_REMOTE_PAIR == INKY
