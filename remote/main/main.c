@@ -40,6 +40,15 @@
 
 SSD1306_t screen;
 
+uint32_t last_interrupt_time = 0;
+#define DEBOUNCE_TIME 1
+
+QueueHandle_t button_queue;
+
+typedef struct{
+	int button_pin;
+} button_event_t;
+
 static const char *TAG = "Basic_Slave";
 
 void my_data_populate(my_data_t *data);
@@ -205,8 +214,30 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     //uint32_t gpio_num = (uint32_t) arg;
     //xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+	
+	//get current time and check if it's time for a new interrupt
+	//uint32_t current_time = xTaskGetTickCountFromISR() * portTICK_PERIOD_MS;
+	//if(current_time - last_interrupt_time < DEBOUNCE_TIME) return; //ignore interrupt
+	//last_interrupt_time = current_time;
 
-	send_espnow_data();
+	int button_pin = (int)arg;
+	button_event_t button_event = {
+		.button_pin = button_pin,
+	};
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	xQueueSendFromISR(button_queue, &button_event, &xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+	//send_espnow_data();
+}
+
+static void button_task(void *args) {
+	button_event_t button_event;
+	while(1){
+		if(xQueueReceive(button_queue, &button_event, portMAX_DELAY) == pdTRUE){
+			send_espnow_data();
+		}
+	}
 }
 
 void app_main(void)
@@ -275,11 +306,14 @@ void app_main(void)
   	//vTaskDelay(3000 / portTICK_PERIOD_MS);
 	xTaskCreate(boot_text_task, "boot_text_task", 2000, NULL, 10, &boot_text_handle);
 
+	button_queue = xQueueCreate(10, sizeof(button_event_t));
+	xTaskCreate(button_task, "button_task", 2048, NULL, tskIDLE_PRIORITY, NULL);
 
-//	while(1){
-//		//send_espnow_data();
-//		//vTaskDelay(10 / portTICK_PERIOD_MS);
-//	}
+
+	while(1){
+		send_espnow_data();
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
+	}
 
 
 }

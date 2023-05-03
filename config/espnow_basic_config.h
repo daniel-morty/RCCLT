@@ -9,7 +9,7 @@
 #define PINKY	3
 #define CLYDE	4
 //change this value to compile for different care remote pairs
-#define CAR_REMOTE_PAIR INKY
+#define CAR_REMOTE_PAIR CLYDE
 
 #define RF_PIN 9
 #define RB_PIN 8
